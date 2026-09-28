@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-AO">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#020605"><title>CrisJoseGamers · Máquinas</title>
+<style>
+:root{--g:#23f274;--bd:#163c29;--card:#06140d;--mut:#7e998b}
+*{box-sizing:border-box}html,body{margin:0;background:#020605;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}button,input,select{font:inherit}button{cursor:pointer}
+.app{max-width:540px;margin:auto;min-height:100vh;padding-bottom:40px;background:radial-gradient(circle at 50% -10%,rgba(27,255,113,.14),transparent 30%)}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(2,6,5,.92);backdrop-filter:blur(14px);border-bottom:1px solid rgba(35,255,119,.14)}
+.top h1{margin:0;font-size:15px;flex:1}.top small{display:block;color:var(--mut);font-size:10px;font-weight:400;margin-top:2px}
+.back{width:38px;height:38px;border:1px solid #184b31;background:var(--card);color:#dfffea;border-radius:12px;font-size:18px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:12px 14px 4px}
+.tab{padding:10px 4px;border:1px solid var(--bd);background:var(--card);color:var(--mut);border-radius:12px;font-size:12px;font-weight:700}.tab.on{background:var(--g);color:#031007;border-color:var(--g)}
+.sec{display:none;padding:8px 14px}.sec.on{display:block}
+.strip{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 10px}.strip div{border:1px solid var(--bd);background:var(--card);border-radius:14px;padding:10px}.strip small{color:var(--mut);font-size:10px;display:block}.strip b{font-size:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mc{text-align:left;color:#fff;border:1px solid var(--bd);background:var(--card);border-radius:16px;padding:12px;min-height:118px;display:flex;flex-direction:column;gap:3px}
+.mc .mtype{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}.mc b{font-size:15px}.mc small{color:var(--mut);font-size:10px;margin-top:auto}
+.st{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;align-self:flex-start;margin-top:2px}
+.free{border-color:#1d7549}.free .st{background:rgba(35,242,116,.16);color:#5dffa0}
+.busy{border-color:#b98a1c}.busy .st{background:rgba(255,190,40,.16);color:#ffc94d}.busy .timer{color:#ffd76a}
+.over{border-color:#c33;animation:pl 1.1s infinite}.over .st{background:rgba(255,60,60,.18);color:#ff8484}.over .timer{color:#ff8484}
+.maint{opacity:.6;border-color:#444}.maint .st{background:#222;color:#aaa}
+@keyframes pl{50%{box-shadow:0 0 18px rgba(255,60,60,.5)}}
+.timer{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;margin-top:4px}
+.add{width:100%;padding:12px;margin-bottom:10px;border:1px solid #32ff84;background:linear-gradient(135deg,#0e4027,#0a2819);color:#a7ffc8;border-radius:13px;font-weight:800}
+.card{border:1px solid var(--bd);background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}.card h3{margin:0 0 6px;font-size:14px}
+.empty{padding:26px 14px;text-align:center;color:var(--mut);font-size:12px;border:1px dashed var(--bd);border-radius:14px}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.78);display:none}.modal.open{display:block}
+.box{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(93vw,460px);max-height:90vh;overflow:auto;background:#04100a;border:1px solid #1d7046;border-radius:22px;padding:18px}
+.box h2{margin:0 0 4px;font-size:17px;padding-right:30px}.box .x{position:absolute;right:12px;top:12px;width:32px;height:32px;border-radius:10px;border:1px solid #184b31;background:var(--card);color:#fff}
+label{display:block;font-size:10px;color:var(--mut);margin:10px 0 2px;font-weight:700;letter-spacing:.4px}
+input,select{width:100%;padding:12px;border-radius:11px;border:1px solid #19482f;background:#06140d;color:#fff;outline:none}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.primary,.danger,.ghost{width:100%;padding:13px;border:0;border-radius:12px;font-weight:900;margin-top:10px}
+.primary{background:var(--g);color:#031007}.danger{background:#7a1c1c;color:#fff}.ghost{background:#0a2417;border:1px solid var(--bd);color:#a7ffc8;font-weight:700;font-size:12px}
+.chips{display:flex;gap:6px;margin-top:8px}.chips button{flex:1;padding:9px 2px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:#bfe;font-size:11px}
+.hint{font-size:10px;color:var(--mut);margin-top:6px;line-height:1.4}
+.big{font-size:38px;font-weight:900;text-align:center;margin:12px 0 2px;font-variant-numeric:tabular-nums}
+.kv{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid #0f2a1c}.kv span{color:var(--mut)}
+.item{display:flex;gap:10px;align-items:center;border:1px solid #123d29;background:var(--card);padding:10px;border-radius:12px;margin-top:6px}.item div{flex:1;min-width:0}.item b{font-size:12px;display:block}.item small{color:var(--mut);font-size:10px}
+.plus{color:#5dffa0;font-weight:800;font-size:12px}.minus{color:#ff8484;font-weight:800;font-size:12px}
+.sum{font-weight:800;margin:8px 0 0;font-size:13px;color:#a7ffc8}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#0a2417;border:1px solid #27ff7b;color:#caffdd;padding:10px 14px;border-radius:12px;font-size:12px;opacity:0;pointer-events:none;transition:.25s;z-index:100;text-align:center;max-width:90vw}.toast.show{opacity:1;transform:translateX(-50%)}
+</style>
+<script src="sync.js"></script></head>
+<body><div class="app">
+<header class="top"><button class="back" onclick="location.href='painel.html'" aria-label="Voltar">‹</button><h1>Controlo de máquinas<small id="clock"></small></h1></header>
+<nav class="tabs"><button class="tab on" data-t="tM">Máquinas</button><button class="tab" data-t="tV">Vendas e caixa</button><button class="tab" data-t="tH">Histórico</button></nav>
+
+<section class="sec on" id="tM"><div class="strip"><div><small>Ocupadas agora</small><b id="occ">0/0</b></div><div id="todayBox"><small>Faturado hoje</small><b id="todayRev">0 Kz</b></div></div><button class="add" id="addM">+ Adicionar máquina</button><div class="grid" id="grid"></div></section>
+
+<section class="sec" id="tV">
+<div class="card"><h3>Vender produto</h3><label>PRODUTO</label><input id="sItem" list="prodList" placeholder="Ex.: Água, Sumo, Cartão de recarga"><datalist id="prodList"></datalist><div class="row2"><div><label>QUANTIDADE</label><input id="sQty" type="number" inputmode="numeric" value="1" min="1"></div><div><label>PREÇO UNIT. (Kz)</label><input id="sPrice" type="number" inputmode="numeric" placeholder="0"></div></div><div class="sum" id="sTotal">Total: 0 Kz</div><button class="primary" id="sGo">Registar venda</button></div>
+<div class="card"><h3>Registar despesa</h3><label>DESCRIÇÃO</label><input id="eDesc" placeholder="Ex.: Energia, internet, manutenção"><label>VALOR (Kz)</label><input id="eAmt" type="number" inputmode="numeric" placeholder="0"><button class="primary" id="eGo">Registar despesa</button></div>
+</section>
+
+<section class="sec" id="tH"><div class="tabs" style="padding:0 0 8px"><button class="tab on" data-f="1">Hoje</button><button class="tab" data-f="7">7 dias</button><button class="tab" data-f="0">Tudo</button></div><div class="strip" id="hSum"></div><div id="hList"></div></section>
+</div>
+<div class="modal" id="modal"><div class="box"><button class="x" onclick="closeSheet()">×</button><div id="sheet"></div></div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const get=(k,f)=>{try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}},set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const kz=n=>Number(n||0).toLocaleString('pt-AO')+' Kz';
+const hm=t=>new Date(t).toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+const dh=t=>new Date(t).toLocaleDateString('pt-PT',{day:'2-digit',month:'2-digit'})+' · '+hm(t);
+const fmt=ms=>{const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60,p=n=>String(n).padStart(2,'0');return(h?h+':':'')+p(m)+':'+p(x)};
+if(localStorage.getItem('cjgSession')!=='active')location.replace('login.html');
+const role=localStorage.getItem('cjgRole')||'owner',owner=role!=='employee';
+const who=owner?(localStorage.getItem('accountName')||'Proprietário'):(localStorage.getItem('cjgWho')||'Funcionário');
+let machines=get('machines',[]),sessions=get('sessions',[]),sales=get('sales',[]),expenses=get('expenses',[]);
+machines.forEach(m=>{if(!m.id)m.id=uid()});
+const saveAll=()=>{set('machines',machines);set('sessions',sessions);set('sales',sales);set('expenses',expenses)};
+const addLog=text=>{const l=get('cjgLog',[]);l.unshift({t:Date.now(),by:who,role:owner?'owner':'employee',text});set('cjgLog',l.slice(0,200))};
+const total=s=>s.pay.reduce((a,p)=>a+p.min,0),paid=s=>s.pay.reduce((a,p)=>a+p.amount,0),endAt=s=>s.start+total(s)*60000;
+const active=id=>sessions.find(s=>s.machineId===id&&!s.ended);
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>t.classList.remove('show'),2200)}
+function openSheet(h){window.CJG&&CJG.hold(true);$('#sheet').innerHTML=h;$('#modal').classList.add('open')}function closeSheet(){$('#modal').classList.remove('open');window.CJG&&CJG.hold(false)}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeSheet()});
+if(!owner)$('#todayBox').style.display='none';
+$$('nav.tabs .tab').forEach(b=>b.onclick=()=>{$$('nav.tabs .tab').forEach(x=>x.classList.toggle('on',x===b));$$('.sec').forEach(s=>s.classList.toggle('on',s.id===b.dataset.t));if(b.dataset.t==='tH')renderHist();});
+function beep(){try{navigator.vibrate&&navigator.vibrate([300,150,300]);const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=880;g.gain.value=.15;o.start();setTimeout(()=>{o.stop();a.close()},600)}catch{}}
+const alerted=new Set(),key=s=>s.id+':'+total(s);
+sessions.forEach(s=>{if(!s.ended&&endAt(s)<=Date.now())alerted.add(key(s))});
+function stateOf(m){if(m.maint)return['maint','Manutenção'];const s=active(m.id);if(!s)return['free','Livre'];return endAt(s)<=Date.now()?['over','Tempo esgotado']:['busy','Ocupada']}
+function todayRev(){const f=new Date().setHours(0,0,0,0);let r=0;sessions.forEach(s=>s.pay.forEach(p=>{if(p.t>=f)r+=p.amount}));sales.forEach(x=>{if(x.t>=f)r+=x.total});return r}
+function renderMachines(){
+ const busy=machines.filter(m=>active(m.id)).length;$('#occ').textContent=busy+'/'+machines.length;$('#todayRev').textContent=kz(todayRev());
+ $('#grid').innerHTML=machines.length?machines.map(m=>{const[c,l]=stateOf(m),s=active(m.id);return`<button class="mc ${c}" data-m="${m.id}"><span class="mtype">${esc(m.type)}</span><b>${esc(m.name)}</b><span class="st">${l}</span>${s?`<div class="timer" data-end="${endAt(s)}">--:--</div><small>${esc(s.client||'Cliente')} · até ${hm(endAt(s))}</small>`:`<small>${kz(m.price)}/hora</small>`}</button>`}).join(''):'<div class="empty" style="grid-column:1/-1">Ainda não há máquinas registadas. Toque em "+ Adicionar máquina" para começar.</div>';
+ $$('[data-m]').forEach(b=>b.onclick=()=>{const m=machines.find(x=>x.id===b.dataset.m);active(m.id)?activeSheet(m.id):freeSheet(m.id)});tick()}
+function tick(){
+ $('#clock').textContent=new Date().toLocaleString('pt-PT',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+ let redo=false;sessions.forEach(s=>{if(!s.ended&&endAt(s)<=Date.now()&&!alerted.has(key(s))){alerted.add(key(s));redo=true;beep();toast('Tempo esgotado: '+s.machineName)}});
+ if(redo){renderMachines();return}
+ $$('.timer').forEach(e=>{const r=+e.dataset.end-Date.now();e.textContent=(r<0?'+':'')+fmt(Math.abs(r))});
+ const d=$('#dTimer');if(d){const r=+d.dataset.end-Date.now();d.textContent=(r<0?'+':'')+fmt(Math.abs(r));d.style.color=r<0?'#ff8484':'#fff'}}
+setInterval(tick,1000);
+// ---- máquinas
+$('#addM').onclick=()=>{openSheet(`<h2>Nova máquina</h2><label>NOME</label><input id="mName" placeholder="Ex.: PC-01, PS5-02"><label>TIPO</label><select id="mType">${['PC Gamer','PS2','PS3','PS4','PS5','Xbox 360','Xbox One','Xbox Series','Nintendo Switch','PSP','Outro'].map(t=>`<option>${t}</option>`).join('')}</select><label>PREÇO POR HORA (Kz)</label><input id="mPrice" type="number" inputmode="numeric" placeholder="0"><button class="primary" id="mGo">Adicionar máquina</button>`);
+ $('#mGo').onclick=()=>{const name=$('#mName').value.trim(),price=+$('#mPrice').value;if(!name||!(price>0)){toast('Indique o nome e o preço por hora');return}if(machines.some(m=>m.name.toLowerCase()===name.toLowerCase())){toast('Já existe uma máquina com esse nome');return}machines.push({id:uid(),name,type:$('#mType').value,price});addLog('Máquina adicionada: '+name);saveAll();closeSheet();renderMachines();toast('Máquina adicionada')}};
+function freeSheet(id){const m=machines.find(x=>x.id===id);
+ if(m.maint){openSheet(`<h2>${esc(m.name)}</h2><div class="hint">Esta máquina está em manutenção e não pode receber clientes.</div><button class="primary" id="mBack">Reativar máquina</button>`);$('#mBack').onclick=()=>{m.maint=false;addLog('Máquina reativada: '+m.name);saveAll();closeSheet();renderMachines()};return}
+ openSheet(`<h2>${esc(m.name)} · Iniciar sessão</h2><div class="hint">${esc(m.type)} · ${kz(m.price)}/hora</div><label>CLIENTE (opcional)</label><input id="fClient" placeholder="Nome do cliente"><div class="row2"><div><label>VALOR PAGO (Kz)</label><input id="fAmt" type="number" inputmode="numeric" placeholder="0"></div><div><label>TEMPO (minutos)</label><input id="fMin" type="number" inputmode="numeric" placeholder="0"></div></div><div class="chips">${[15,30,60,120].map(x=>`<button data-chip="${x}">${x<60?x+' min':x/60+' h'}</button>`).join('')}</div><div class="hint">O tempo sugerido é calculado pelo valor pago e pelo preço da hora. Pode ajustar manualmente.</div><button class="primary" id="fGo">Iniciar contagem</button><button class="ghost" id="fMaint">Colocar em manutenção</button>${owner?'<button class="ghost" id="fDel" style="color:#ff9c9c">Remover máquina</button>':''}`);
+ let manual=false;$('#fMin').oninput=()=>manual=true;
+ $('#fAmt').oninput=()=>{if(!manual&&m.price>0)$('#fMin').value=Math.floor((+$('#fAmt').value||0)/m.price*60)||''};
+ $$('[data-chip]').forEach(b=>b.onclick=()=>{const x=+b.dataset.chip;$('#fMin').value=x;manual=true;$('#fAmt').value=Math.round(x/60*m.price)});
+ $('#fGo').onclick=()=>{const amt=+$('#fAmt').value,min=+$('#fMin').value;if(!(min>0)){toast('Defina o tempo comprado');return}if($('#fAmt').value===''||amt<0){toast('Indique o valor pago');return}if(active(id)){toast('Máquina já ocupada');return}
+  const t=Date.now();sessions.push({id:uid(),machineId:id,machineName:m.name,client:$('#fClient').value.trim(),start:t,pay:[{t,amount:amt,min}],by:who,ended:null});addLog(`Sessão iniciada em ${m.name}: ${min} min por ${kz(amt)}`);saveAll();closeSheet();renderMachines();toast('Sessão iniciada em '+m.name)};
+ $('#fMaint').onclick=()=>{m.maint=true;addLog('Máquina em manutenção: '+m.name);saveAll();closeSheet();renderMachines()};
+ if(owner)$('#fDel').onclick=()=>{if(confirm('Remover '+m.name+'? O histórico é mantido.')){machines=machines.filter(x=>x.id!==id);addLog('Máquina removida: '+m.name);saveAll();closeSheet();renderMachines()}}}
+function activeSheet(id){const m=machines.find(x=>x.id===id),s=active(id);
+ openSheet(`<h2>${esc(m.name)}</h2><div class="hint">${esc(m.type)} · ${esc(s.client||'Cliente sem nome')}</div><div class="big" id="dTimer" data-end="${endAt(s)}">--:--</div><div class="hint" style="text-align:center">tempo restante (+ = tempo excedido)</div><div class="kv"><span>Início</span><b>${hm(s.start)}</b></div><div class="kv"><span>Termina</span><b>${hm(endAt(s))}</b></div><div class="kv"><span>Tempo comprado</span><b>${total(s)} min</b></div><div class="kv"><span>Total pago</span><b>${kz(paid(s))}</b></div><div class="kv"><span>Atendido por</span><b>${esc(s.by)}</b></div><label>ADICIONAR TEMPO</label><div class="row2"><input id="xAmt" type="number" inputmode="numeric" placeholder="Valor (Kz)"><input id="xMin" type="number" inputmode="numeric" placeholder="Minutos"></div><button class="primary" id="xGo">Adicionar tempo</button><button class="danger" id="xEnd">Terminar sessão</button>`);
+ $('#xAmt').oninput=()=>{if(m.price>0)$('#xMin').value=Math.floor((+$('#xAmt').value||0)/m.price*60)||''};
+ $('#xGo').onclick=()=>{const amt=+$('#xAmt').value,min=+$('#xMin').value;if(!(min>0)||$('#xAmt').value===''){toast('Indique o valor e os minutos');return}s.pay.push({t:Date.now(),amount:amt,min});addLog(`Tempo extra em ${m.name}: +${min} min por ${kz(amt)}`);saveAll();closeSheet();renderMachines();toast('Tempo adicionado')};
+ $('#xEnd').onclick=()=>{if(!confirm('Terminar a sessão em '+m.name+'?'))return;s.ended=Date.now();addLog(`Sessão terminada em ${m.name}`);saveAll();closeSheet();renderMachines();toast('Sessão terminada')};tick()}
+// ---- vendas e despesas
+const lastPrice=()=>{const p={};sales.forEach(x=>p[x.item.toLowerCase()]=x.unit);return p};
+function fillProducts(){const seen=[...new Set(sales.map(x=>x.item))];$('#prodList').innerHTML=seen.map(i=>`<option value="${esc(i)}">`).join('')}
+const calcSale=()=>{$('#sTotal').textContent='Total: '+kz((+$('#sQty').value||0)*(+$('#sPrice').value||0))};
+$('#sQty').oninput=$('#sPrice').oninput=calcSale;
+$('#sItem').onchange=()=>{const p=lastPrice()[$('#sItem').value.trim().toLowerCase()];if(p){$('#sPrice').value=p;calcSale()}};
+$('#sGo').onclick=()=>{const item=$('#sItem').value.trim(),qty=+$('#sQty').value,unit=+$('#sPrice').value;if(!item||!(qty>0)||!(unit>0)){toast('Indique produto, quantidade e preço');return}
+ sales.push({id:uid(),t:Date.now(),item,qty,unit,total:qty*unit,by:who});addLog(`Venda: ${qty}× ${item} · ${kz(qty*unit)}`);saveAll();$('#sItem').value='';$('#sQty').value=1;$('#sPrice').value='';calcSale();fillProducts();renderMachines();toast('Venda registada')};
+$('#eGo').onclick=()=>{const desc=$('#eDesc').value.trim(),amount=+$('#eAmt').value;if(!desc||!(amount>0)){toast('Indique descrição e valor');return}
+ expenses.push({id:uid(),t:Date.now(),desc,amount,by:who});addLog(`Despesa: ${desc} · ${kz(amount)}`);saveAll();$('#eDesc').value='';$('#eAmt').value='';toast('Despesa registada')};
+// ---- histórico
+let hf=1;$$('[data-f]').forEach(b=>b.onclick=()=>{hf=+b.dataset.f;$$('[data-f]').forEach(x=>x.classList.toggle('on',x===b));renderHist()});
+function renderHist(){const from=hf===1?new Date().setHours(0,0,0,0):hf===7?Date.now()-7*864e5:0,ev=[];
+ sessions.forEach((s,i)=>s.pay.forEach((p,j)=>ev.push({t:p.t,amt:p.amount,title:(j?'Tempo extra · ':'Sessão · ')+s.machineName,sub:`${p.min} min${s.client?' · '+s.client:''} · ${s.by}`})));
+ sales.forEach(x=>ev.push({t:x.t,amt:x.total,title:`Venda · ${x.qty}× ${x.item}`,sub:x.by}));
+ expenses.forEach(x=>ev.push({t:x.t,amt:-x.amount,title:'Despesa · '+x.desc,sub:x.by}));
+ const l=ev.filter(e=>e.t>=from).sort((a,b)=>b.t-a.t),rec=l.filter(e=>e.amt>0).reduce((a,e)=>a+e.amt,0),des=-l.filter(e=>e.amt<0).reduce((a,e)=>a+e.amt,0);
+ $('#hSum').innerHTML=owner?`<div><small>Receitas</small><b>${kz(rec)}</b></div><div><small>Despesas</small><b>${kz(des)}</b></div><div style="grid-column:1/-1"><small>Lucro</small><b>${kz(rec-des)}</b></div>`:'';
+ $('#hList').innerHTML=l.length?l.map(e=>`<div class="item"><div><b>${esc(e.title)}</b><small>${dh(e.t)} · ${esc(e.sub)}</small></div><span class="${e.amt<0?'minus':'plus'}">${e.amt<0?'−':'+'}${kz(Math.abs(e.amt))}</span></div>`).join(''):'<div class="empty">Sem movimentos neste período.</div>'}
+window.onSynced=()=>{if($('#modal').classList.contains('open'))return;machines=get('machines',[]);sessions=get('sessions',[]);sales=get('sales',[]);expenses=get('expenses',[]);renderMachines();fillProducts();if($('#tH').classList.contains('on'))renderHist()};
+saveAll();fillProducts();renderMachines();
+</script></body></html>
