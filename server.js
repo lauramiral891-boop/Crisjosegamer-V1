@@ -1,7 +1,10 @@
 // API CrisJoseGamers — sem dependências além de "pg". Sem DATABASE_URL usa memória (só para testes).
 const http=require('http'),crypto=require('crypto');
+let webpush=null;try{webpush=require('web-push')}catch{}
 const SECRET=process.env.JWT_SECRET||'trocar-este-segredo',PORT=process.env.PORT||3000;
 const RESEND_KEY=process.env.RESEND_API_KEY||'',RESEND_FROM=process.env.RESEND_FROM||'onboarding@resend.dev';
+const VAPID_PUB=process.env.VAPID_PUBLIC||'',VAPID_PRIV=process.env.VAPID_PRIVATE||'';
+if(webpush&&VAPID_PUB&&VAPID_PRIV)webpush.setVapidDetails('mailto:admin@crisjosegamers.app',VAPID_PUB,VAPID_PRIV);
 let last=0;const nextSrv=()=>last=Math.max(Date.now(),last+1);
 const HOUSE=['machine','session','sale','expense','log','following','gallery'],GLOBAL=['post','story','group','community','adminpost'];
 // ---------- armazenamento
@@ -20,15 +23,21 @@ if(process.env.DATABASE_URL){
    delPending:e=>q('delete from pending_verifications where email=$1',[e]),
    getRec:async(h,k,i)=>(await q('select * from records where house=$1 and kind=$2 and id=$3',[h,k,i]))[0],
    putRec:(h,k,i,d,del,s)=>q('insert into records(house,kind,id,data,srv,deleted) values($1,$2,$3,$4,$5,$6) on conflict(house,kind,id) do update set data=$4,srv=$5,deleted=$6',[h,k,i,JSON.stringify(d??null),s,!!del]),
-   since:(h,s)=>q("select kind,id,data,srv,deleted from records where (house=$1 or house='*') and srv>$2 order by srv limit 2000",[h,s])};
+   since:(h,s)=>q("select kind,id,data,srv,deleted from records where (house=$1 or house='*') and srv>$2 order by srv limit 2000",[h,s]),
+   addPushSub:(house,endpoint,p256dh,auth)=>q('insert into push_subs(house,endpoint,p256dh,auth) values($1,$2,$3,$4) on conflict(endpoint) do update set house=$1,p256dh=$3,auth=$4',[house,endpoint,p256dh,auth]),
+   pushSubsFor:h=>q('select endpoint,p256dh,auth from push_subs where house=$1',[h]),
+   delPushSub:endpoint=>q('delete from push_subs where endpoint=$1',[endpoint])};
 }else{
-  const U=[],R=new Map(),P=new Map();
+  const U=[],R=new Map(),P=new Map(),PS=new Map();
   db={ping:async()=>1,userByEmail:async e=>U.find(u=>u.email===e),userByUsername:async u=>U.find(x=>x.username===u),userByCode:async c=>U.find(u=>u.code===c),addUser:async u=>{U.push(u)},
    delUser:async(c,h)=>{const i=U.findIndex(u=>u.code===c&&u.house===h&&u.role==='employee');if(i>=0)U.splice(i,1)},
    setPending:async(email,code,expires,payload)=>{P.set(email,{email,code,expires,payload})},
    getPending:async e=>P.get(e),delPending:async e=>{P.delete(e)},
    getRec:async(h,k,i)=>R.get(h+'|'+k+'|'+i),putRec:async(h,k,i,d,del,s)=>{R.set(h+'|'+k+'|'+i,{house:h,kind:k,id:i,data:d,deleted:!!del,srv:s})},
-   since:async(h,s)=>[...R.values()].filter(r=>(r.house===h||r.house==='*')&&r.srv>s).sort((a,b)=>a.srv-b.srv).slice(0,2000)};
+   since:async(h,s)=>[...R.values()].filter(r=>(r.house===h||r.house==='*')&&r.srv>s).sort((a,b)=>a.srv-b.srv).slice(0,2000),
+   addPushSub:async(house,endpoint,p256dh,auth)=>{PS.set(endpoint,{house,endpoint,p256dh,auth})},
+   pushSubsFor:async h=>[...PS.values()].filter(s=>s.house===h),
+   delPushSub:async endpoint=>{PS.delete(endpoint)}};
 }
 // ---------- segurança
 const b64=b=>Buffer.from(b).toString('base64url');
@@ -49,6 +58,16 @@ async function sendCode(email,name,code){
  })});
  if(!r.ok){const t=await r.text().catch(()=>'');console.error('Falha ao enviar e-mail:',r.status,t);throw new Error('Não foi possível enviar o e-mail de confirmação.')}
 }
+// ---------- notificação push (com vibração) para o dono, quando o funcionário faz um registro
+async function notifyOwner(house,title,body){
+ if(!webpush||!VAPID_PUB||!VAPID_PRIV)return;
+ const subs=await db.pushSubsFor(house);
+ for(const s of subs){
+  try{await webpush.sendNotification({endpoint:s.endpoint,keys:{p256dh:s.p256dh,auth:s.auth}},JSON.stringify({title,body}))}
+  catch(e){if(e.statusCode===404||e.statusCode===410)await db.delPushSub(s.endpoint)}
+ }
+}
+const KIND_LABEL={machine:'uma máquina',session:'uma sessão',sale:'uma venda',expense:'uma despesa'};
 // ---------- HTTP
 const send=(res,c,o)=>{res.writeHead(c,{'Content-Type':'application/json','Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Authorization,Content-Type','Access-Control-Allow-Methods':'GET,POST,OPTIONS'});res.end(JSON.stringify(o))};
 const body=req=>new Promise((ok,no)=>{let d='',n=0;req.on('data',c=>{n+=c.length;if(n>12e6){no(new Error('grande'));req.destroy()}else d+=c});req.on('end',()=>{try{ok(JSON.parse(d||'{}'))}catch{no(new Error('json'))}});});
@@ -86,16 +105,20 @@ const routes={
  'POST /employees':async(b,a)=>{if(a.role!=='owner')return[403,{error:'Só o proprietário cria funcionários.'}];const code=S(b.code).toLowerCase();if(!S(b.name)||!code||String(b.password||'').length<4)return[400,{error:'Preencha nome, código e senha (4+ caracteres).'}];
   if(await db.userByCode(code))return[409,{error:'Este código já está em uso. Escolha outro.'}];await db.addUser({id:crypto.randomUUID(),email:null,username:null,name:S(b.name),company:a.company,pass:hash(String(b.password)),role:'employee',house:a.house,code,created:Date.now(),verified:true});return[200,{ok:true}]},
  'POST /employees/delete':async(b,a)=>{if(a.role!=='owner')return[403,{error:'Sem permissão.'}];await db.delUser(S(b.code).toLowerCase(),a.house);return[200,{ok:true}]},
- 'POST /sync':async(b,a)=>{const since=+b.since||0;
+ 'GET /vapid-key':async()=>[200,{key:VAPID_PUB}],
+ 'POST /push-subscribe':async(b,a)=>{const s=b.subscription;if(!s||!s.endpoint||!s.keys)return[400,{error:'Inscrição inválida.'}];await db.addPushSub(a.house,s.endpoint,s.keys.p256dh,s.keys.auth);return[200,{ok:true}]},
+ 'POST /sync':async(b,a)=>{const since=+b.since||0;const novos=[];
   for(const c of(Array.isArray(b.changes)?b.changes:[]).slice(0,3000)){const g=GLOBAL.includes(c.kind);if(!g&&!HOUSE.includes(c.kind))continue;if(a.role==='employee'&&c.kind==='expense')continue;
    const h=g?'*':a.house,id=S(c.id).slice(0,120);if(!id)continue;const old=await db.getRec(h,c.kind,id);
    if(g&&c.deleted){if(old&&old.data&&old.data.authorId&&old.data.authorId!==a.id)continue;await db.putRec(h,c.kind,id,null,true,nextSrv());continue}
    if(c.deleted){await db.putRec(h,c.kind,id,null,true,nextSrv());continue}
    let d=c.data;if(!d||typeof d!=='object')continue;if(g){if(old&&old.data&&!old.deleted)d=mergePost(old.data,d,a.id);else d.authorId=a.id}
+   if(!g&&!old&&a.role==='employee'&&KIND_LABEL[c.kind])novos.push(c.kind);
    await db.putRec(h,c.kind,id,d,false,nextSrv())}
+  if(novos.length)notifyOwner(a.house,'Novo registro de '+(a.name||'funcionário'),'Adicionou '+novos.map(k=>KIND_LABEL[k]).join(', ')+'.').catch(()=>{});
   const rows=await db.since(a.house,since);return[200,{cursor:rows.length?Math.max(...rows.map(r=>+r.srv)):since,changes:rows.map(r=>({kind:r.kind,id:r.id,data:r.data,deleted:!!r.deleted}))}]}
 };
-const PUBLIC=/^\/(login|register|verify|employee-login)$/;
+const PUBLIC=/^\/(login|register|verify|employee-login|vapid-key)$/;
 async function initDb(){
  if(!process.env.DATABASE_URL)return;
  const {Pool}=require('pg');
