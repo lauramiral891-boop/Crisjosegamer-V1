@@ -1,8 +1,11 @@
 // API CrisJoseGamers — sem dependências além de "pg". Sem DATABASE_URL usa memória (só para testes).
 const http=require('http'),crypto=require('crypto');
 let webpush=null;try{webpush=require('web-push')}catch{}
+let nodemailer=null;try{nodemailer=require('nodemailer')}catch{}
 const SECRET=process.env.JWT_SECRET||'trocar-este-segredo',PORT=process.env.PORT||3000;
 const RESEND_KEY=process.env.RESEND_API_KEY||'',RESEND_FROM=process.env.RESEND_FROM||'onboarding@resend.dev';
+const GMAIL_USER=process.env.GMAIL_USER||'',GMAIL_PASS=process.env.GMAIL_PASS||'';
+const mailer=(nodemailer&&GMAIL_USER&&GMAIL_PASS)?nodemailer.createTransport({service:'gmail',auth:{user:GMAIL_USER,pass:GMAIL_PASS}}):null;
 const VAPID_PUB=process.env.VAPID_PUBLIC||'',VAPID_PRIV=process.env.VAPID_PRIVATE||'';
 if(webpush&&VAPID_PUB&&VAPID_PRIV)webpush.setVapidDetails('mailto:admin@crisjosegamers.app',VAPID_PUB,VAPID_PRIV);
 let last=0;const nextSrv=()=>last=Math.max(Date.now(),last+1);
@@ -83,8 +86,8 @@ const routes={
   if(await db.userByUsername(username))return[409,{error:'Este nome de utilizador já está em uso. Escolha outro.'}];
   const code=genCode();
   await db.setPending(email,code,Date.now()+15*60000,{username,name:S(b.name),company:S(b.company),pass:hash(pw)});
-  try{await sendCode(email,S(b.name),code)}catch(e){return[502,{error:e.message}]}
-  return[200,{pending:true,email}]},
+  try{await sendCode(email,S(b.name),code);return[200,{pending:true,email}]}
+  catch(e){return[200,{pending:true,email,devCode:code,emailFailed:true}]}},
  'POST /verify':async(b)=>{
   const email=S(b.email).toLowerCase(),code=S(b.code);
   const p=await db.getPending(email);
